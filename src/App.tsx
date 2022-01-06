@@ -1,25 +1,42 @@
+import { Typography } from "@mui/material";
 import React from 'react';
-import logo from './logo.svg';
 import './App.css';
+import Layout from "./components/Layout";
+import SearchField from "./components/SearchField";
+import WordList from "./components/WordList";
+import { baseurl } from './constants/baseUrl';
+import useDebounce from './hooks/useDebouncer';
+import { useFetch } from './hooks/useFetch';
+import { useInputValue } from './hooks/useInputValue';
 
-function App() {
+
+const App: React.FC = () => {
+  const { inputValue, changeInput, clearInput } = useInputValue();
+  const debouncedSearchTerm = useDebounce(inputValue, 500);
+
+  const url = debouncedSearchTerm && `${baseurl}${debouncedSearchTerm}`;
+
+  const { status, data, error } = useFetch(url);
+
+  const clearInputValue= () => {
+    clearInput();
+  };
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Layout>
+      <SearchField
+        inputValue={inputValue}
+        onInputChange={changeInput}
+        onButtonClick={clearInputValue}
+      />
+      <Typography variant="h5" style={{ margin: 16 }}>
+        {status === "fetching" && "Finding Rhyming words..."}
+        {status === "error" && `Error: ${error}`}
+        {inputValue.length > 0 && `Found ${data.length} rhyming words`}
+      </Typography>
+      <WordList
+        items={inputValue.length === 0 ? []: data}
+      />
+    </Layout>
   );
 }
 
